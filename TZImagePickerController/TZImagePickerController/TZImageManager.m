@@ -15,6 +15,7 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 @property (nonatomic, strong) ALAssetsLibrary *assetLibrary;
+@property (nonatomic, weak) AVAssetExportSession *session;
 @end
 
 @implementation TZImageManager
@@ -735,7 +736,7 @@ static dispatch_once_t onceToken;
             // 修正视频转向
             session.videoComposition = videoComposition;
         }
-        
+        self.session = session;
         // Begin to export video to the output path asynchronously.
         [session exportAsynchronouslyWithCompletionHandler:^(void) {
             switch (session.status) {
@@ -745,11 +746,14 @@ static dispatch_once_t onceToken;
                     NSLog(@"AVAssetExportSessionStatusWaiting"); break;
                 case AVAssetExportSessionStatusExporting:
                     NSLog(@"AVAssetExportSessionStatusExporting"); break;
+                case AVAssetExportSessionStatusCancelled:
+                    NSLog(@"AVAssetExportSessionStatusCancelled"); break;
                 case AVAssetExportSessionStatusCompleted: {
                     NSLog(@"AVAssetExportSessionStatusCompleted");
                     dispatch_async(dispatch_get_main_queue(), ^{
                         if (completion) {
                             completion(outputPath);
+                            self.session = nil;
                         }
                     });
                 }  break;
@@ -760,7 +764,12 @@ static dispatch_once_t onceToken;
         }];
     }
 }
-
+-(void)sessionCancelExport{
+    if (self.session) {
+        [self.session cancelExport];
+        self.session = nil;
+    }
+}
 /// Judge is a assets array contain the asset 判断一个assets数组是否包含这个asset
 - (BOOL)isAssetsArray:(NSArray *)assets containAsset:(id)asset {
     if (iOS8Later) {
