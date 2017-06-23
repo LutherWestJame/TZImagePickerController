@@ -96,6 +96,8 @@
 /// 修正图片转向
 - (UIImage *)fixOrientation:(UIImage *)aImage;
 
+/// 取消视频压缩导出
+-(void)sessionCancelExport;
 @end
 
 //@interface TZSortDescriptor : NSSortDescriptor
